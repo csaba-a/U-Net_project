@@ -10,7 +10,7 @@ A production-ready, enterprise-grade deep learning framework for medical image s
 
 <!-- Optionally add a project banner or logo above -->
 
-## 🚀 Key Features
+##  Key Features
 
 ### Advanced Architecture
 - **Multi-scale UNet variants**: UNet, Attention UNet, Deep Supervision UNet
@@ -39,7 +39,7 @@ A production-ready, enterprise-grade deep learning framework for medical image s
 - **GradCAM visualization**: Model interpretability
 - **Confidence calibration**: Uncertainty quantification
 
-## 📊 Performance Benchmarks
+##  Performance Benchmarks
 
 | Model           | Dice Score | IoU Score | Training Time | Memory Usage |
 |-----------------|------------|-----------|---------------|--------------|
@@ -67,7 +67,7 @@ unet_training/
 └── README.md              # Project documentation
 ```
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Installation
 
@@ -125,7 +125,7 @@ trainer.train(
 )
 ```
 
-## 🔧 Configuration
+##  Configuration
 
 The framework uses YAML-based configuration for easy experimentation:
 
@@ -157,7 +157,7 @@ data:
   num_workers: 4
 ```
 
-## 📈 Advanced Features
+##  Advanced Features
 
 ### 1. Multi-GPU Distributed Training
 
@@ -196,7 +196,7 @@ uncertainty_viz = UncertaintyVisualizer("visualizations/")
 uncertainty_viz.visualize_uncertainty(prediction, uncertainty, "uncertainty_example.png")
 ```
 
-## 🧪 Testing
+##  Testing
 
 Comprehensive test suite with 90%+ coverage:
 
@@ -231,7 +231,7 @@ trainer.train(
 )
 ```
 
-## 🐳 Docker Deployment
+##  Docker Deployment
 
 ```bash
 # Build Docker image
@@ -240,14 +240,6 @@ docker build -t unet_training .
 # Run training in container
 docker run --gpus all -v $(pwd)/data:/app/data unet_training train
 ```
-
-## 📚 API Documentation
-
-See [docs/](docs/) for full API documentation.
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
 
 ## 📄 License
 
@@ -262,9 +254,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Contact
 
 For questions and support:
-- Email: csaba.a@gmail.com
+- Email: csaba.a.kozma@gmail.com
 - GitHub Issues: [Create an issue](https://github.com/csaba-a/U-Net_project/issues)
-- LinkedIn: [Csaba A.](https://linkedin.com/in/csaba-a)
+- LinkedIn: [Csaba Kozma]([https://www.linkedin.com/in/csaba-a-kozma/])
 
 ---
 
