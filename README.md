@@ -208,7 +208,7 @@ pytest tests/ -v --cov=.
 pytest tests/test_models.py -v
 ```
 
-## 📊 Monitoring & Logging
+##  Monitoring & Logging
 
 ### TensorBoard Integration
 
@@ -241,23 +241,23 @@ docker build -t unet_training .
 docker run --gpus all -v $(pwd)/data:/app/data unet_training train
 ```
 
-## 📄 License
+##  License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 - Original UNet paper: [U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597)
 - Albumentations library for advanced augmentations
 - PyTorch team for the excellent deep learning framework
 
-## 📞 Contact
+##  Contact
 
 For questions and support:
 - Email: csaba.a.kozma@gmail.com
 - GitHub Issues: [Create an issue](https://github.com/csaba-a/U-Net_project/issues)
-- LinkedIn: [Csaba Kozma]([https://www.linkedin.com/in/csaba-a-kozma/])
+- LinkedIn: [Csaba Kozma] (https://www.linkedin.com/in/csaba-a-kozma/)
 
 ---
 
-**Built with ❤️ for the medical imaging community** 
+
