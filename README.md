@@ -4,7 +4,7 @@
 [![Coverage Status](https://img.shields.io/badge/coverage-90%25-brightgreen.svg)](https://github.com/csaba-a/U-Net_project)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A production-ready, enterprise-grade deep learning framework for medical image segmentation using UNet architecture. This framework demonstrates advanced ML engineering practices, comprehensive testing, and scalable deployment capabilities.
+This framework demonstrates advanced ML engineering practices, comprehensive testing, and scalable deployment capabilities.
 
 ---
 
