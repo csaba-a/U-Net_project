@@ -1,4 +1,4 @@
-# <img src="docs/logo.png" alt="UNet Logo" height="60"/> Advanced UNet Training Framework
+# Advanced UNet Training Framework
 
 [![Build Status](https://github.com/csaba-a/U-Net_project/actions/workflows/ci.yml/badge.svg)](https://github.com/csaba-a/U-Net_project/actions)
 [![Coverage Status](https://img.shields.io/badge/coverage-90%25-brightgreen.svg)](https://github.com/csaba-a/U-Net_project)
