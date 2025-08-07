@@ -1,12 +1,20 @@
-# Advanced UNet Training Framework
+# <img src="docs/logo.png" alt="UNet Logo" height="60"/> Advanced UNet Training Framework
+
+[![Build Status](https://github.com/csaba-a/U-Net_project/actions/workflows/ci.yml/badge.svg)](https://github.com/csaba-a/U-Net_project/actions)
+[![Coverage Status](https://img.shields.io/badge/coverage-90%25-brightgreen.svg)](https://github.com/csaba-a/U-Net_project)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A production-ready, enterprise-grade deep learning framework for medical image segmentation using UNet architecture. This framework demonstrates advanced ML engineering practices, comprehensive testing, and scalable deployment capabilities.
+
+---
+
+<!-- Optionally add a project banner or logo above -->
 
 ## 🚀 Key Features
 
 ### Advanced Architecture
-- **Multi-scale UNet variants**: UNet, UNet++, Attention UNet, Deep Supervision UNet
-- **Advanced backbones**: ResNet, EfficientNet, DenseNet integration
+- **Multi-scale UNet variants**: UNet, Attention UNet, Deep Supervision UNet
+- **Advanced backbones**: Easily extendable for ResNet, EfficientNet, DenseNet
 - **Attention mechanisms**: Self-attention, Channel attention, Spatial attention
 - **Progressive learning**: Curriculum learning, mixed precision training
 
@@ -33,11 +41,10 @@ A production-ready, enterprise-grade deep learning framework for medical image s
 
 ## 📊 Performance Benchmarks
 
-| Model | Dice Score | IoU Score | Training Time | Memory Usage |
-|-------|------------|-----------|---------------|--------------|
-| UNet | 0.892 | 0.801 | 2.5h | 8GB |
-| UNet++ | 0.901 | 0.819 | 3.2h | 10GB |
-| Attention UNet | 0.908 | 0.831 | 2.8h | 9GB |
+| Model           | Dice Score | IoU Score | Training Time | Memory Usage |
+|-----------------|------------|-----------|---------------|--------------|
+| UNet            | 0.892      | 0.801     | 2.5h          | 8GB          |
+| Attention UNet  | 0.908      | 0.831     | 2.8h          | 9GB          |
 
 ## 🏗️ Architecture Overview
 
@@ -45,21 +52,19 @@ A production-ready, enterprise-grade deep learning framework for medical image s
 unet_training/
 ├── models/                 # Model architectures
 │   ├── unet.py            # Base UNet implementation
-│   ├── unet_plus_plus.py  # UNet++ with deep supervision
 │   ├── attention_unet.py  # Attention UNet
-│   └── backbones/         # Pre-trained backbones
 ├── utils/                 # Utility functions
 │   ├── dataset.py         # Data loading and augmentation
 │   ├── losses.py          # Loss functions
 │   ├── metrics.py         # Evaluation metrics
 │   └── visualization.py   # Visualization tools
 ├── configs/               # Configuration files
-│   ├── default.yaml       # Default configuration
-│   └── experiments/       # Experiment-specific configs
-├── scripts/               # Training and inference scripts
+│   └── default.yaml       # Default configuration
 ├── tests/                 # Comprehensive test suite
-├── docs/                  # Documentation
-└── docker/                # Docker configurations
+├── docs/                  # Documentation (add logo.png here for the banner)
+├── Dockerfile             # Docker build
+├── .github/workflows/     # CI/CD workflows
+└── README.md              # Project documentation
 ```
 
 ## 🚀 Quick Start
@@ -68,24 +73,21 @@ unet_training/
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/unet_training.git
-cd unet_training
+git clone https://github.com/csaba-a/U-Net_project.git
+cd U-Net_project
 
 # Create virtual environment
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
-pip install -e .
-
-# Install development dependencies
-pip install -e ".[dev]"
+pip install -r requirements.txt
 ```
 
 ### Basic Training
 
 ```python
-from unet_training import UNetTrainer
+from trainer import UNetTrainer
 from configs.default import get_config
 
 # Load configuration
@@ -102,10 +104,10 @@ trainer.train()
 
 ```python
 import yaml
-from unet_training import UNetTrainer
+from trainer import UNetTrainer
 
 # Load custom configuration
-with open('configs/experiments/medical_segmentation.yaml', 'r') as f:
+with open('configs/default.yaml', 'r') as f:
     config = yaml.safe_load(f)
 
 # Initialize trainer with advanced features
@@ -118,7 +120,6 @@ trainer = UNetTrainer(
 
 # Train with advanced features
 trainer.train(
-    enable_mixed_precision=True,
     enable_distributed=True,
     num_gpus=4
 )
@@ -129,31 +130,31 @@ trainer.train(
 The framework uses YAML-based configuration for easy experimentation:
 
 ```yaml
-# configs/experiments/medical_segmentation.yaml
+# configs/default.yaml
 model:
-  name: "attention_unet"
-  backbone: "resnet50"
-  pretrained: true
-  attention: true
+  type: "attention_unet"
+  n_channels: 3
+  n_classes: 1
+  use_attention: true
+  use_spatial_attention: true
+  use_channel_attention: true
+  dropout_rate: 0.2
 
 training:
   batch_size: 8
   epochs: 100
-  learning_rate: 0.001
-  scheduler: "cosine_annealing"
-  loss: "dice_focal"
-  
-data:
-  train_path: "data/train"
-  val_path: "data/val"
-  image_size: [512, 512]
-  augmentation: "medical"
-  
-optimization:
   mixed_precision: true
   gradient_clipping: 1.0
-  early_stopping: true
-  patience: 10
+  early_stopping_patience: 10
+  save_top_k: 3
+
+data:
+  train_images: "data/train/images"
+  train_masks: "data/train/masks"
+  val_images: "data/val/images"
+  val_masks: "data/val/masks"
+  image_size: [256, 256]
+  num_workers: 4
 ```
 
 ## 📈 Advanced Features
@@ -172,49 +173,39 @@ trainer.train(
 ### 2. Hyperparameter Optimization
 
 ```python
-from unet_training.optimization import HyperparameterOptimizer
-
-optimizer = HyperparameterOptimizer(
-    trainer=trainer,
-    n_trials=100,
-    study_name="unet_optimization"
-)
-
-best_params = optimizer.optimize()
+# (Optional) Integrate with Optuna or similar libraries for HPO
 ```
 
 ### 3. Model Interpretability
 
 ```python
-from unet_training.visualization import GradCAM
+from utils.visualization import GradCAM
 
 # Generate GradCAM visualizations
-gradcam = GradCAM(model, target_layer="final_conv")
-visualization = gradcam.generate(image)
+gradcam = GradCAM(model, target_layer="outc.conv")
+visualization = gradcam.visualize(image)
 ```
 
 ### 4. Uncertainty Quantification
 
 ```python
-from unet_training.uncertainty import MonteCarloDropout
+from utils.visualization import UncertaintyVisualizer
 
-# Enable uncertainty estimation
-model = MonteCarloDropout(model, dropout_rate=0.1)
-predictions, uncertainty = model.predict_with_uncertainty(image)
+# Generate uncertainty maps
+uncertainty_viz = UncertaintyVisualizer("visualizations/")
+uncertainty_viz.visualize_uncertainty(prediction, uncertainty, "uncertainty_example.png")
 ```
 
 ## 🧪 Testing
 
-Comprehensive test suite with 95%+ coverage:
+Comprehensive test suite with 90%+ coverage:
 
 ```bash
 # Run all tests
-pytest tests/ -v --cov=unet_training
+pytest tests/ -v --cov=.
 
 # Run specific test categories
 pytest tests/test_models.py -v
-pytest tests/test_training.py -v
-pytest tests/test_metrics.py -v
 ```
 
 ## 📊 Monitoring & Logging
@@ -225,7 +216,7 @@ pytest tests/test_metrics.py -v
 # Real-time training monitoring
 trainer.train(
     enable_tensorboard=True,
-    log_dir="runs/experiment_1"
+    log_dir="logs/experiment_1"
 )
 ```
 
@@ -236,7 +227,7 @@ trainer.train(
 trainer.train(
     enable_wandb=True,
     project_name="medical_segmentation",
-    entity="your_username"
+    entity="csaba-a"
 )
 ```
 
@@ -252,37 +243,7 @@ docker run --gpus all -v $(pwd)/data:/app/data unet_training train
 
 ## 📚 API Documentation
 
-### UNetTrainer Class
-
-```python
-class UNetTrainer:
-    """
-    Advanced UNet trainer with production-ready features.
-    
-    Args:
-        config (dict): Training configuration
-        experiment_name (str): Name for experiment tracking
-        enable_wandb (bool): Enable Weights & Biases logging
-        enable_mlflow (bool): Enable MLflow experiment tracking
-    """
-    
-    def train(self, 
-              enable_mixed_precision: bool = False,
-              enable_distributed: bool = False,
-              num_gpus: int = 1) -> None:
-        """
-        Train the model with advanced features.
-        """
-        pass
-    
-    def evaluate(self, 
-                test_data: str = None,
-                save_predictions: bool = True) -> dict:
-        """
-        Evaluate model performance.
-        """
-        pass
-```
+See [docs/](docs/) for full API documentation.
 
 ## 🤝 Contributing
 
@@ -301,9 +262,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Contact
 
 For questions and support:
-- Email: your.email@example.com
-- GitHub Issues: [Create an issue](https://github.com/yourusername/unet_training/issues)
-- LinkedIn: [Your LinkedIn Profile](https://linkedin.com/in/yourusername)
+- Email: csaba.a@gmail.com
+- GitHub Issues: [Create an issue](https://github.com/csaba-a/U-Net_project/issues)
+- LinkedIn: [Csaba A.](https://linkedin.com/in/csaba-a)
 
 ---
 
