@@ -1,0 +1,402 @@
+name: UNet Training CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [ published ]
+
+env:
+  PYTHON_VERSION: '3.9'
+  CUDA_VERSION: '11.8'
+
+jobs:
+  # Code Quality Checks
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install black flake8 mypy isort bandit
+        pip install -r requirements.txt
+        
+    - name: Run Black (code formatting)
+      run: |
+        black --check --diff .
+        
+    - name: Run isort (import sorting)
+      run: |
+        isort --check-only --diff .
+        
+    - name: Run Flake8 (linting)
+      run: |
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+        
+    - name: Run MyPy (type checking)
+      run: |
+        mypy models/ utils/ --ignore-missing-imports
+        
+    - name: Run Bandit (security)
+      run: |
+        bandit -r . -f json -o bandit-report.json || true
+
+  # Unit Tests
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10']
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov pytest-xdist
+        
+    - name: Run unit tests
+      run: |
+        pytest tests/ -v --cov=unet_training --cov-report=xml --cov-report=html
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  # Integration Tests
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov
+        
+    - name: Create test data
+      run: |
+        python -c "
+        import os
+        import numpy as np
+        from PIL import Image
+        
+        # Create test directories
+        os.makedirs('data/test/images', exist_ok=True)
+        os.makedirs('data/test/masks', exist_ok=True)
+        
+        # Create sample images and masks
+        for i in range(10):
+            img = np.random.randint(0, 255, (256, 256, 3), dtype=np.uint8)
+            mask = np.random.randint(0, 255, (256, 256), dtype=np.uint8)
+            
+            Image.fromarray(img).save(f'data/test/images/test_{i:03d}.png')
+            Image.fromarray(mask).save(f'data/test/masks/test_{i:03d}.png')
+        "
+        
+    - name: Run integration tests
+      run: |
+        pytest tests/test_integration.py -v --cov=unet_training --cov-append
+
+  # GPU Tests (if available)
+  gpu-tests:
+    name: GPU Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install PyTorch with CUDA
+      run: |
+        python -m pip install --upgrade pip
+        pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+        pip install -r requirements.txt
+        
+    - name: Run GPU tests
+      run: |
+        python -c "
+        import torch
+        print(f'CUDA available: {torch.cuda.is_available()}')
+        if torch.cuda.is_available():
+            print(f'CUDA version: {torch.version.cuda}')
+            print(f'GPU count: {torch.cuda.device_count()}')
+            print(f'GPU name: {torch.cuda.get_device_name(0)}')
+        "
+        
+    - name: Test model on GPU
+      run: |
+        python -c "
+        import torch
+        from models.unet import UNet
+        
+        if torch.cuda.is_available():
+            model = UNet(n_channels=3, n_classes=1).cuda()
+            x = torch.randn(1, 3, 256, 256).cuda()
+            with torch.no_grad():
+                output = model(x)
+            print(f'Model output shape: {output.shape}')
+            print('GPU test passed!')
+        else:
+            print('CUDA not available, skipping GPU test')
+        "
+
+  # Performance Tests
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest-benchmark
+        
+    - name: Run performance tests
+      run: |
+        pytest tests/test_performance.py --benchmark-only
+
+  # Security Scan
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  # Docker Build and Test
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+      
+    - name: Build Docker image
+      run: |
+        docker build -t unet-training:latest .
+        
+    - name: Test Docker image
+      run: |
+        docker run --rm unet-training:latest python -c "
+        import torch
+        from models.unet import UNet
+        print('Docker test passed!')
+        "
+
+  # Documentation Build
+  docs-build:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install documentation dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install sphinx sphinx-rtd-theme myst-parser
+        
+    - name: Build documentation
+      run: |
+        cd docs && make html
+        
+    - name: Upload documentation artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: documentation
+        path: docs/_build/html/
+
+  # Model Training Test
+  training-test:
+    name: Training Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Create sample data
+      run: |
+        python -c "
+        import os
+        import numpy as np
+        from PIL import Image
+        
+        # Create directories
+        os.makedirs('data/train/images', exist_ok=True)
+        os.makedirs('data/train/masks', exist_ok=True)
+        os.makedirs('data/val/images', exist_ok=True)
+        os.makedirs('data/val/masks', exist_ok=True)
+        
+        # Create sample data
+        for i in range(20):
+            img = np.random.randint(0, 255, (256, 256, 3), dtype=np.uint8)
+            mask = np.random.randint(0, 255, (256, 256), dtype=np.uint8)
+            
+            if i < 16:  # Training data
+                Image.fromarray(img).save(f'data/train/images/sample_{i:03d}.png')
+                Image.fromarray(mask).save(f'data/train/masks/sample_{i:03d}.png')
+            else:  # Validation data
+                Image.fromarray(img).save(f'data/val/images/sample_{i:03d}.png')
+                Image.fromarray(mask).save(f'data/val/masks/sample_{i:03d}.png')
+        "
+        
+    - name: Run training test
+      run: |
+        python -c "
+        from trainer import UNetTrainer
+        import yaml
+        
+        # Load minimal config
+        config = {
+            'model': {'type': 'unet', 'n_channels': 3, 'n_classes': 1},
+            'data': {
+                'train_images': 'data/train/images',
+                'train_masks': 'data/train/masks',
+                'val_images': 'data/val/images',
+                'val_masks': 'data/val/masks',
+                'image_size': [256, 256]
+            },
+            'training': {'epochs': 2, 'batch_size': 2},
+            'optimizer': {'type': 'adam', 'lr': 0.001},
+            'scheduler': {'type': 'cosine'},
+            'loss': {'type': 'dice_bce'}
+        }
+        
+        # Initialize trainer
+        trainer = UNetTrainer(config, experiment_name='test_training')
+        
+        # Run training for 2 epochs
+        results = trainer.train()
+        print('Training test completed successfully!')
+        print(f'Best metrics: {results[\"best_metrics\"]}')
+        "
+
+  # Deploy to Test Environment
+  deploy-test:
+    name: Deploy to Test
+    runs-on: ubuntu-latest
+    needs: [code-quality, unit-tests, integration-tests, docker-build]
+    if: github.ref == 'refs/heads/develop'
+    
+    steps:
+    - name: Deploy to test environment
+      run: |
+        echo "Deploying to test environment..."
+        # Add your deployment logic here
+        # This could be deploying to a test server, staging environment, etc.
+
+  # Deploy to Production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [code-quality, unit-tests, integration-tests, docker-build, deploy-test]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Deploy to production
+      run: |
+        echo "Deploying to production..."
+        # Add your production deployment logic here
+        # This could be deploying to cloud services, updating model registry, etc.
+
+  # Notify on Failure
+  notify-failure:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+    needs: [code-quality, unit-tests, integration-tests, docker-build]
+    if: failure()
+    
+    steps:
+    - name: Notify team
+      run: |
+        echo "CI/CD pipeline failed!"
+        # Add notification logic here (Slack, email, etc.) 

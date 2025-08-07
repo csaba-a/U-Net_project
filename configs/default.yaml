@@ -1,0 +1,207 @@
+# Default configuration for UNet training
+# This configuration demonstrates best practices for medical image segmentation
+
+# Model configuration
+model:
+  type: "attention_unet"  # Options: unet, attention_unet
+  n_channels: 3
+  n_classes: 1
+  bilinear: false
+  use_attention: true
+  use_spatial_attention: true
+  use_channel_attention: true
+  dropout_rate: 0.2
+
+# Data configuration
+data:
+  train_images: "data/train/images"
+  train_masks: "data/train/masks"
+  val_images: "data/val/images"
+  val_masks: "data/val/masks"
+  test_images: "data/test/images"
+  test_masks: "data/test/masks"
+  image_size: [512, 512]
+  num_workers: 4
+  pin_memory: true
+
+# Training configuration
+training:
+  epochs: 100
+  batch_size: 8
+  mixed_precision: true
+  gradient_clipping: 1.0
+  early_stopping_patience: 15
+  early_stopping_monitor: "val_loss"
+  save_top_k: 3
+  checkpoint_monitor: "val_loss"
+  checkpoint_dir: "checkpoints"
+
+# Optimizer configuration
+optimizer:
+  type: "adamw"  # Options: adam, adamw, sgd
+  lr: 0.001
+  weight_decay: 0.0001
+  momentum: 0.9  # Only for SGD
+
+# Learning rate scheduler configuration
+scheduler:
+  type: "cosine"  # Options: cosine, step, plateau, onecycle
+  params:
+    epochs: 100
+    step_size: 30
+    gamma: 0.1
+    patience: 5
+    factor: 0.5
+    max_lr: 0.001
+
+# Loss function configuration
+loss:
+  type: "combo"  # Options: dice_bce, dice, iou, focal, boundary, focal_tversky, combo, hausdorff, surface, lovasz_hinge, weighted_bce
+  params:
+    dice_weight: 0.5
+    bce_weight: 0.3
+    boundary_weight: 0.1
+    focal_weight: 0.1
+    alpha: 0.7
+    beta: 0.3
+    gamma: 1.0
+    smooth: 1.0
+    boundary_weight: 1.0
+    surface_weight: 1.0
+    pos_weight: 2.0
+
+# Experiment tracking configuration
+experiment:
+  name: "medical_segmentation_v1"
+  enable_wandb: false
+  enable_mlflow: false
+  enable_tensorboard: true
+  wandb_project: "unet_training"
+  log_dir: "logs"
+
+# Data augmentation configuration
+augmentation:
+  train:
+    horizontal_flip: true
+    vertical_flip: true
+    random_rotate: true
+    shift_scale_rotate: true
+    elastic_transform: true
+    grid_distortion: true
+    optical_distortion: true
+    gauss_noise: true
+    brightness_contrast: true
+    random_gamma: true
+    normalize: true
+  val:
+    normalize: true
+
+# Advanced features configuration
+advanced:
+  distributed_training: false
+  num_gpus: 1
+  strategy: "ddp"  # Options: ddp, dp
+  gradient_accumulation_steps: 1
+  warmup_epochs: 5
+  label_smoothing: 0.1
+  mixup: false
+  cutmix: false
+
+# Evaluation configuration
+evaluation:
+  threshold: 0.5
+  save_predictions: true
+  save_visualizations: true
+  metrics: ["dice", "iou", "accuracy", "precision", "recall", "f1"]
+  hausdorff_distance: true
+  surface_distance: true
+
+# Model interpretability configuration
+interpretability:
+  enable_gradcam: true
+  enable_attention_visualization: true
+  enable_uncertainty_quantification: true
+  monte_carlo_dropout: true
+  dropout_rate: 0.1
+  num_samples: 10
+
+# Performance optimization configuration
+performance:
+  prefetch_factor: 2
+  persistent_workers: true
+  pin_memory_device: "cuda"
+  memory_format: "channels_last"
+  compile_model: false  # PyTorch 2.0+ feature
+
+# Logging configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  save_logs: true
+  log_interval: 10
+  eval_interval: 1
+
+# Checkpointing configuration
+checkpointing:
+  save_frequency: 1
+  save_optimizer: true
+  save_scheduler: true
+  save_metrics: true
+  save_config: true
+  compression: false
+
+# Validation configuration
+validation:
+  frequency: 1
+  save_best_only: true
+  monitor_mode: "min"
+  monitor_metric: "val_loss"
+  patience: 10
+  min_delta: 0.001
+
+# Testing configuration
+testing:
+  batch_size: 1
+  tta: false  # Test time augmentation
+  ensemble: false
+  num_models: 3
+  voting: "soft"  # Options: soft, hard
+
+# Deployment configuration
+deployment:
+  export_format: "onnx"  # Options: onnx, torchscript, tensorrt
+  optimize_for_inference: true
+  quantization: false
+  dynamic_batching: true
+  max_batch_size: 8
+
+# Security configuration
+security:
+  enable_gradient_checkpointing: false
+  enable_amp: true
+  enable_deterministic: false
+  seed: 42
+
+# Monitoring configuration
+monitoring:
+  enable_profiling: false
+  profile_memory: false
+  profile_time: false
+  enable_alerting: false
+  alert_threshold: 0.1
+
+# Backup configuration
+backup:
+  enable_backup: true
+  backup_frequency: 10
+  max_backups: 5
+  backup_dir: "backups"
+
+# Documentation configuration
+documentation:
+  save_experiment_summary: true
+  save_model_card: true
+  save_training_report: true
+  include_hyperparameters: true
+  include_metrics: true
+  include_visualizations: true 
